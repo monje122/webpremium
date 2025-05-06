@@ -1,0 +1,116 @@
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(to bottom right, #e0f2f1, #ffffff);
+  margin: 0;
+  padding: 0;
+  color: #333;
+}
+.container {
+  max-width: 600px;
+  margin: auto;
+  padding: 20px;
+}
+section {
+  display: none;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+section:not(.hidden) {
+  display: block;
+}
+input, button {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+button {
+  background-color: #009688;
+  color: white;
+  border: none;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+button:hover {
+  background-color: #00796b;
+}
+#cartons-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  gap: 10px;
+  margin-top: 15px;
+}
+.carton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60px;
+  background: #c8e6c9;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+.carton.selected {
+  background: #f44336;
+  color: white;
+}
+#cartonModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+#cartonModal:not(.hidden) {
+  display: flex;
+}
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  width: 90%;
+  max-width: 320px;
+}
+.modal-content img {
+  width: 100%;
+  max-width: 250px;
+  margin-bottom: 15px;
+}
+.btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+.hidden {
+  display: none!important;
+}
+@media (max-width: 480px) {
+  .carton {
+    height: 45px;
+    font-size: 14px;
+  }
+  input, button {
+    font-size: 14px;
+  }
+  h1, h2 {
+    font-size: 22px;
+  }
+}
+.carton.fade-out {
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  opacity: 0;
+  transform: scale(0.8);
+}
+
