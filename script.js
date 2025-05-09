@@ -120,7 +120,7 @@ async function consultarCartones() {
     item.cartones.forEach(num => {
       const img = document.createElement('img');
       img.src = `${supabaseUrl}/storage/v1/object/public/cartones/SERIAL_PRUEBA_CARTON_${String(num).padStart(5, '0')}.jpg`;
-      img.style.width = '200px';
+      img.style.width = '500px';
       img.style.margin = '5px';
       cont.appendChild(img);
     });
