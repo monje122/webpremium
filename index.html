@@ -1,88 +1,88 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bingo</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bingo App</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="container">
-    <!-- Ventana 1: Bienvenida -->
-    <section id="ventana1">
-      <h1>Bienvenidos al Bingo</h1>
-      <img src="logo.png" alt="Logo del Bingo" style="max-width:200px;" />
-      <button onclick="mostrarVentana('ventanaLogin')">Ver mis cartones</button>
-      <button onclick="mostrarVentana('ventana2')">Inscribirse</button>
-      <button onclick="pedirClave()">Administrador</button>
-    </section>
+  <!-- Ventana de bienvenida -->
+  <section id="bienvenida">
+    <img src="https://i.postimg.cc/RVjDRVDV/img4.png" alt="Logo" class="logo">
+    <button onclick="mostrarVentana('inscripcion')">Inscribirse</button>
+    <button onclick="mostrarVentana('usuario')">Usuario</button>
+    <button onclick="mostrarVentana('admin')">Admin</button>
+  </section>
 
-    <!-- Ventana Login -->
-    <section id="ventanaLogin" class="hidden">
-      <h2>Consulta tu inscripción</h2>
-      <input type="tel" id="telefonoLogin" placeholder="Tu número de teléfono" />
-      <button onclick="consultarJugador()">Consultar</button>
-      <div id="resultadoConsulta"></div>
-      <button onclick="mostrarVentana('ventana1')">Volver</button>
-    </section>
+  <!-- Ventana de inscripción -->
+  <section id="inscripcion" class="oculto">
+    <h2>Inscripción</h2>
+    <input type="text" placeholder="Nombre" id="nombre">
+    <input type="tel" placeholder="Teléfono" id="telefono">
+    <input type="text" placeholder="Cédula" id="cedula">
+    <input type="text" placeholder="¿Quién te refirió?" id="referido">
+   <button onclick="guardarDatosInscripcion()">Continuar</button>
 
-    <!-- Ventana 2: Inscripción -->
-    <section id="ventana2" class="hidden">
-      <h2>Inscripción</h2>
-      <input type="text" id="nombre" placeholder="Tu nombre" />
-      <input type="tel" id="telefono" placeholder="Tu número de teléfono" />
-      <input type="text" id="referido" placeholder="¿Quién te refirió?" />
-      <button onclick="guardarInscripcion()">Siguiente</button>
-    </section>
+    <button onclick="mostrarVentana('bienvenida')">Inicio</button>
+  </section>
 
-    <!-- Ventana 3: Selección cartones -->
-<section id="ventana3" class="hidden">
-  <h2>Selecciona tus cartones</h2>
-  <div id="cartons-container"></div> <!-- Este ID debe coincidir con JS -->
-  <p>Total a pagar: <span id="totalMonto">0</span> Bs</p>
-  <button onclick="irAVentana4()">Continuar</button>
-</section>
+  <!-- Selección de cartones -->
+  <section id="cartones" class="oculto">
+    <h2>Selecciona tus cartones</h2>
+    <div id="contenedor-cartones"></div>
+    <p>Total a pagar: <span id="monto-total">0</span> Bs</p>
+    <button class="btn-fijo" onclick="mostrarVentana('pago')">Continuar</button>
+    <button onclick="mostrarVentana('bienvenida')">Inicio</button>
+  </section>
 
+  <!-- Ventana de pago -->
+  <section id="pago" class="oculto">
+    <h2>Pago Móvil</h2>
+    <p>Banco: Mercantil</p>
+    <p>Teléfono: 0412-3714136</p>
+    <p>Cédula: 26740060</p>
+    <p>Monto a pagar: <span id="monto-pago"></span> Bs</p>
+    <input type="file" accept="image/*" id="comprobante">
+   <button onclick="enviarComprobante()">Enviar comprobante</button>
 
-    <!-- Modal de vista previa -->
-    <div id="cartonModal" class="hidden">
-      <div class="modal-content">
-        <img id="cartonImage" src="" alt="Vista previa del cartón" />
-        <br />
-        <button id="btnSelect">Seleccionar</button>
-        <button id="btnRemove" class="hidden">Quitar selección</button>
-        <button id="btnClose">Cerrar</button>
-      </div>
+    <button onclick="mostrarVentana('bienvenida')">Inicio</button>
+  </section>
+
+  <!-- Ventana usuario -->
+  <section id="usuario" class="oculto">
+    <h2>Consultar cartones</h2>
+    <input type="text" placeholder="Ingresa tu cédula" id="consulta-cedula">
+    <button onclick="consultarCartones()">Consultar</button>
+    <div id="cartones-usuario"></div>
+    <button onclick="mostrarVentana('bienvenida')">Inicio</button>
+  </section>
+
+  <!-- Ventana admin -->
+  <section id="admin" class="oculto">
+    <h2>Panel de Administración</h2>
+    <input type="password" placeholder="Clave" id="clave-admin">
+    <button onclick="entrarAdmin()">Entrar</button>
+    <div id="panel-admin" class="oculto">
+      <h3>Comprobantes</h3>
+      <div id="lista-comprobantes"></div>
+      <p>Total cartones vendidos: <span id="contador-cartones"></span></p>
+      <p>Total clientes inscritos: <span id="contador-clientes"></span></p>
+      <button onclick="reiniciarTodo()">Reiniciar Todo</button>
     </div>
-
-    <!-- Ventana 4: Pago -->
-    <section id="ventana4" class="hidden">
-      <h2>Método de Pago</h2>
-      <ul>
-        <li>Teléfono: 0412-3714136</li>
-        <li>Cédula: 26740060</li>
-        <li>Banco: Mercantil</li>
-      </ul>
-      <h2>Sube tu comprobante</h2>
-      <input type="file" id="comprobante" accept="image/*" onchange="mostrarNombreArchivo(this)" />
-      <p id="archivoNombre"></p>
-      <div class="btn-group">
-        <button onclick="subirYEnviar()">Enviar por WhatsApp</button>
-        <button onclick="mostrarVentana('ventana1')">Inicio</button>
-      </div>
-    </section>
-
-    <!-- Panel admin -->
-    <section id="adminPanel" class="hidden">
-      <h2>Panel de Administrador</h2>
-      <div id="listaInscripciones"></div>
-      <button onclick="reiniciarSistema()">Reiniciar Todo</button>
-      <button onclick="mostrarVentana('ventana1')">Salir</button>
-    </section>
+    <button onclick="mostrarVentana('bienvenida')">Inicio</button>
+  </section>
+<!-- Modal de vista previa del cartón -->
+<div id="modal-carton" class="modal oculto">
+  <div class="modal-contenido">
+    <img id="imagen-carton-modal" src="" alt="Cartón" style="width: 100%; max-width: 300px;">
+    <div style="margin-top: 10px;">
+      <button id="btnSeleccionarCarton">Seleccionar</button>
+      <button onclick="cerrarModalCarton()">Cerrar</button>
+    </div>
   </div>
-
- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-
-  <script src="script.js" defer></script>
+</div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="script.js"></script>
 </body>
 </html>
