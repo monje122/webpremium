@@ -272,7 +272,23 @@ document.getElementById('verListaBtn').addEventListener('click', async () => {
     data.reduce((acc, cur) => acc + cur.cartones.length, 0);
   document.getElementById('contador-clientes').textContent = data.length;
 }
+document.getElementById('cerrarVentasBtn').addEventListener('click', async () => {
+  const confirmacion = confirm("¿Estás seguro que quieres cerrar las ventas?");
+  if (!confirmacion) return;
 
+  const { error } = await supabase
+    .from('configuracion')
+    .update({ valor: false }) // o 'false' si la columna es texto
+    .eq('clave', 'ventas_abierta');
+
+  if (error) {
+    alert("Error al cerrar las ventas");
+    console.error(error);
+  } else {
+    alert("Ventas cerradas correctamente");
+    location.reload(); // Opcional: recargar para que se apliquen cambios
+  }
+});
 
 // Reiniciar base de datos
 async function reiniciarTodo() {
