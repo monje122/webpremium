@@ -30,6 +30,9 @@
   <!-- Selección de cartones -->
   <section id="cartones" class="oculto">
     <h2>Selecciona tus cartones</h2>
+    <div id="contadorCartones" class="text-center font-bold text-lg my-2">
+  Cartones disponibles: 50 de 50
+</div>
     <div id="contenedor-cartones"></div>
     <p>Total a pagar: <span id="monto-total">0</span> Bs</p>
     <button class="btn-fijo" onclick="mostrarVentana('pago')">Continuar</button>
@@ -55,23 +58,48 @@
     <input type="text" placeholder="Ingresa tu cédula" id="consulta-cedula">
     <button onclick="consultarCartones()">Consultar</button>
     <div id="cartones-usuario"></div>
-    <button onclick="mostrarVentana('bienvenida')">Inicio</button>
+    <button id="btnElegirMas" onclick="elegirMasCartones()">Elegir más cartones</button>
+<button onclick="mostrarVentana('bienvenida')">Inicio</button>
   </section>
 
-  <!-- Ventana admin -->
-  <section id="admin" class="oculto">
-    <h2>Panel de Administración</h2>
-    <input type="password" placeholder="Clave" id="clave-admin">
-    <button onclick="entrarAdmin()">Entrar</button>
-    <div id="panel-admin" class="oculto">
-      <h3>Comprobantes</h3>
-      <div id="lista-comprobantes"></div>
-      <p>Total cartones vendidos: <span id="contador-cartones"></span></p>
-      <p>Total clientes inscritos: <span id="contador-clientes"></span></p>
-      <button onclick="reiniciarTodo()">Reiniciar Todo</button>
-    </div>
-    <button onclick="mostrarVentana('bienvenida')">Inicio</button>
-  </section>
+  
+<!-- Panel admin -->
+<section id="admin" class="oculto">
+  <h2>Panel de Administración</h2>
+  <input type="password" placeholder="Clave" id="clave-admin">
+  <button onclick="entrarAdmin()">Entrar</button>
+
+  <div id="panel-admin" class="oculto">
+    <h3>Inscripciones pendientes</h3>
+
+    <table id="tabla-comprobantes">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Teléfono</th>
+          <th>Cédula</th>
+          <th># Cartones</th>
+          <th>Comprobante</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <p>Total cartones vendidos: <span id="contador-cartones"></span></p>
+    <p>Total clientes inscritos: <span id="contador-clientes"></span></p>
+<button id="verListaBtn">Ver lista</button>
+    <h3>lista de aprobados</h3>
+<div id="listaAprobados"></div>
+
+    <button id="cerrarVentasBtn" class="btn-admin">Cerrar Ventas</button>
+    <button id="abrirVentasBtn">Abrir Ventas</button>
+    <button onclick="reiniciarTodo()">Reiniciar Todo</button>
+  </div>
+
+  <button onclick="mostrarVentana('bienvenida')">Inicio</button>
+</section>
+
 <!-- Modal de vista previa del cartón -->
 <div id="modal-carton" class="modal oculto">
   <div class="modal-contenido">
