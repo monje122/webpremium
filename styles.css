@@ -77,8 +77,8 @@ button:hover {
 }
 
 .carton.ocupado {
-  background-color: #ccc;
-  color: #888;
+  background-color: red;
+  color: white;
   cursor: not-allowed;
 }
 
@@ -131,3 +131,31 @@ button:hover {
 .oculto {
   display: none;
 }
+#tabla-comprobantes {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 14px;
+}
+
+#tabla-comprobantes th,
+#tabla-comprobantes td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+#tabla-comprobantes img {
+  width: 80px;
+  border-radius: 6px;
+}
+
+.btn-accion {
+  font-size: 18px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+}
+
+.btn-aprobar { color: #28a745; }   /* ✅ verde  */
+.btn-rechazar { color: #dc3545; }  /* ❌ rojo   */
