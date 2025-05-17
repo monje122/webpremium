@@ -95,7 +95,10 @@
 <input type="file" id="cartonImageInput" multiple accept="image/*">
 <button onclick="subirCartones()">Subir imágenes</button>
 <div id="uploadStatus"></div>
-
+<button onclick="borrarCartones()" style="background-color: red; color: white; padding: 10px; border: none; border-radius: 5px;">
+  Borrar todas las imágenes de cartones
+</button>
+<div id="deleteStatus"></div>
 
     <p>Total cartones vendidos: <span id="contador-cartones"></span></p>
     <p>Total clientes inscritos: <span id="contador-clientes"></span></p>
