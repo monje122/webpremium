@@ -1,4 +1,3 @@
-
 const supabaseUrl = 'https://dbkixcpwirjwjvjintkr.supabase.co';
 const supabase = window.supabase.createClient(supabaseUrl, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRia2l4Y3B3aXJqd2p2amludGtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNjYxNDksImV4cCI6MjA2MTY0MjE0OX0.QJmWLWSe-pRYwxWeel8df7JLhNUvMKaTpL0MCDorgho');
 
@@ -12,7 +11,7 @@ let usuario = {
   cartones: [],
 
 };
-const totalCartones = 50;
+let totalCartones = 50;
 // Navegación entre secciones
 async function mostrarVentana(id) {
   // Si es la sección de cartones, primero verificamos si las ventas están abiertas
@@ -59,7 +58,7 @@ async function cargarCartones() {
   cartonesOcupados = data.map(c => c.numero); // ✅ ACTUALIZAR VARIABLE GLOBA
   const contenedor = document.getElementById('contenedor-cartones');
   contenedor.innerHTML = '';
-  for (let i = 1; i <= 50; i++) {
+  for (let i = 1; i <= totalCartones; i++) {
     const carton = document.createElement('div');
     carton.textContent = i;
     carton.classList.add('carton');
@@ -192,6 +191,7 @@ document.getElementById('verListaBtn').addEventListener('click', async () => {
       <tr>
         <th style="border: 1px solid #ccc; padding: 8px;">Nombre</th>
         <th style="border: 1px solid #ccc; padding: 8px;">Cédula</th>
+        <th style="border: 1px solid #ccc; padding: 8px;">Referido</th>
         <th style="border: 1px solid #ccc; padding: 8px;">Teléfono</th>
         <th style="border: 1px solid #ccc; padding: 8px;">Cartones</th>
       </tr>
@@ -207,6 +207,7 @@ document.getElementById('verListaBtn').addEventListener('click', async () => {
     tr.innerHTML = `
       <td style="border: 1px solid #ccc; padding: 8px;">${item.nombre}</td>
       <td style="border: 1px solid #ccc; padding: 8px;">${item.cedula}</td>
+      <td style="border: 1px solid #ccc; padding: 8px;">${item.referido}</td>
       <td style="border: 1px solid #ccc; padding: 8px;">${item.telefono}</td>
       <td style="border: 1px solid #ccc; padding: 8px;">${item.cartones.join(', ')}</td>
     `;
@@ -238,6 +239,7 @@ document.getElementById('verListaBtn').addEventListener('click', async () => {
       <td>${item.nombre}</td>
       <td>${item.telefono}</td>
       <td>${item.cedula}</td>
+      <td>${item.referido}</td>
        <td>${item.cartones.join(', ')}</td>
       <td><a href="${item.comprobante}" target="_blank">
             <img src="${item.comprobante}" alt="Comp.">
@@ -268,8 +270,9 @@ document.getElementById('verListaBtn').addEventListener('click', async () => {
   });
 
   // Contadores
-  document.getElementById('contador-cartones').textContent =
-    data.reduce((acc, cur) => acc + cur.cartones.length, 0);
+  document.getElementById('contadorCartones').innerText = 
+  `Cartones disponibles: ${totalCartones - cartonesOcupados.length} de ${totalCartones}`;
+
   document.getElementById('contador-clientes').textContent = data.length;
 }
 document.getElementById('cerrarVentasBtn').addEventListener('click', async () => {
@@ -479,4 +482,51 @@ async function rechazarInscripcion(item, tr) {
   // Eliminar fila de la tabla visual
   tr.remove();
   alert('Inscripción rechazada y eliminada correctamente');
+}
+function actualizarCantidadCartones() {
+  const nuevaCantidad = parseInt(document.getElementById('inputTotalCartones').value);
+  if (!isNaN(nuevaCantidad) && nuevaCantidad > 0) {
+    totalCartones = nuevaCantidad;
+    alert(`Cantidad de cartones actualizada a ${totalCartones}`);
+    // Opcional: regenerar cartones si estás en esa vista
+    if (document.getElementById('cartones').classList.contains('oculto') === false) {
+      generarCartones();
+    }
+  } else {
+    alert('Ingresa una cantidad válida');
+  }
+}
+async function subirCartones() {
+  const input = document.getElementById('cartonImageInput');
+  const files = input.files;
+  const status = document.getElementById('uploadStatus');
+  status.innerHTML = '';
+
+  if (!files.length) {
+    alert('Selecciona al menos una imagen');
+    return;
+  }
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const fileName = file.name; // Asegúrate de que se llame 1.png, 2.png, etc.
+
+    try {
+      const { data, error } = await supabase.storage
+        .from('cartones')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true // sobreescribe si ya existe
+        });
+
+      if (error) {
+        status.innerHTML += `<p style="color:red;">Error subiendo ${fileName}: ${error.message}</p>`;
+      } else {
+        status.innerHTML += `<p style="color:green;">${fileName} subido correctamente</p>`;
+      }
+    } catch (err) {
+      console.error(err);
+      status.innerHTML += `<p style="color:red;">Error inesperado en ${fileName}</p>`;
+    }
+  }
 }
