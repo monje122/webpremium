@@ -295,15 +295,28 @@ document.getElementById('cerrarVentasBtn').addEventListener('click', async () =>
 
 // Reiniciar base de datos
 async function reiniciarTodo() {
+  const { data: { user } } = await supabase.auth.getUser();
+console.log('Usuario actual:', user);
+
   if (!confirm('¿Estás seguro de reiniciar todo?')) return;
   await supabase.from('inscripciones').delete().neq('cedula', '');
   await supabase.from('cartones').delete().neq('numero', 0);
-  const { data: archivos } = await supabase.storage.from('comprobantes').list();
+  const { data: archivos, error: listError } = await supabase.storage.from('comprobantes').list('uploads', { limit: 1000 });
+
+  if (listError) {
+    console.error('Error listando comprobantes:', listError.message);
+  } else if (archivos.length > 0) {
+    const nombresArchivos = archivos.map(file => file.name);
+    const { error: removeError } = await supabase.storage.from('comprobantes').remove(nombresArchivos);
+    if (removeError) {
+      console.error('Error borrando comprobantes:', removeError.message);
+    } else {
+      console.log(`Se borraron ${nombresArchivos.length} comprobantes`);
+    }
+  }
   const listaDiv = document.getElementById('listaAprobados');
   if (listaDiv) listaDiv.innerHTML = '';
-  for (const file of archivos) {
-    await supabase.storage.from('comprobantes').remove([file.name]);
-  }
+  
   alert('Datos reiniciados');
   location.reload();
 }
@@ -507,26 +520,81 @@ async function subirCartones() {
     return;
   }
 
+  // Mostrar mensaje de carga
+  status.innerHTML = '<p style="color:blue;">Cargando imágenes...</p>';
+
+  const errores = [];
+
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
-    const fileName = file.name; // Asegúrate de que se llame 1.png, 2.png, etc.
+    const fileName = file.name;
 
     try {
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from('cartones')
         .upload(fileName, file, {
           cacheControl: '3600',
-          upsert: true // sobreescribe si ya existe
+          upsert: true
         });
 
       if (error) {
-        status.innerHTML += `<p style="color:red;">Error subiendo ${fileName}: ${error.message}</p>`;
-      } else {
-        status.innerHTML += `<p style="color:green;">${fileName} subido correctamente</p>`;
+        errores.push(`Error subiendo ${fileName}: ${error.message}`);
       }
     } catch (err) {
-      console.error(err);
-      status.innerHTML += `<p style="color:red;">Error inesperado en ${fileName}</p>`;
+      errores.push(`Error inesperado en ${fileName}`);
     }
   }
+
+  // Limpiar input
+  input.value = '';
+
+  // Mostrar resultado
+  if (errores.length) {
+    status.innerHTML = `<p style="color:red;">Se encontraron errores:</p><ul>${errores.map(e => `<li>${e}</li>`).join('')}</ul>`;
+  } else {
+    status.innerHTML = '<p style="color:green;">¡Todas las imágenes fueron subidas exitosamente!</p>';
+  }
+
+  // (Opcional) Borrar el mensaje después de unos segundos
+  setTimeout(() => {
+    status.innerHTML = '';
+  }, 5000); // 5 segundos
+}
+async function borrarCartones() {
+  const status = document.getElementById('deleteStatus');
+  status.innerHTML = 'Cargando lista de imágenes...';
+
+  // Paso 1: Obtener la lista de imágenes en el bucket 'cartones'
+  const { data: list, error: listError } = await supabase.storage
+    .from('cartones')
+    .list('', { limit: 1000 }); // Aumenta si hay más de 1000
+
+  if (listError) {
+    status.innerHTML = `<p style="color:red;">Error listando imágenes: ${listError.message}</p>`;
+    return;
+  }
+
+  if (!list.length) {
+    status.innerHTML = '<p style="color:orange;">No hay imágenes para borrar.</p>';
+    return;
+  }
+
+  // Paso 2: Construir lista de nombres de archivo
+  const fileNames = list.map(file => file.name);
+
+  // Paso 3: Eliminar imágenes
+  const { error: deleteError } = await supabase.storage
+    .from('cartones')
+    .remove(fileNames);
+
+  if (deleteError) {
+    status.innerHTML = `<p style="color:red;">Error al borrar imágenes: ${deleteError.message}</p>`;
+  } else {
+    status.innerHTML = `<p style="color:green;">Se borraron ${fileNames.length} imágenes exitosamente.</p>`;
+  }
+
+  // (Opcional) Ocultar mensaje luego de 5 segundos
+  setTimeout(() => {
+    status.innerHTML = '';
+  }, 5000);
 }
