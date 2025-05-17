@@ -89,8 +89,15 @@
   <h2>Panel de Administración</h2>
   <input type="password" placeholder="Clave" id="clave-admin">
   <button onclick="entrarAdmin()">Entrar</button>
-
+  <button onclick="mostrarVentana('bienvenida')">Inicio</button>
   <div id="panel-admin" class="oculto">
+<div class="admin-buttons">  
+  <button id="cerrarVentasBtn" class="btn-admin">Cerrar Ventas</button>
+  <button id="abrirVentasBtn" class="btn-admin">Abrir Ventas</button>
+  <button onclick="reiniciarTodo()" class="btn-admin danger">Reiniciar Todo</button>
+</div>
+    <p>Total cartones vendidos: <span id="contador-cartones"></span></p>
+    <p>Total clientes inscritos: <span id="contador-clientes"></span></p>
     <h3>Inscripciones pendientes</h3>
 
     <table id="tabla-comprobantes">
@@ -108,6 +115,9 @@
       <tbody></tbody>
     </table>
     
+     <button id="verListaBtn">Ver lista</button>
+    <h3>lista de aprobados</h3>
+<div id="listaAprobados"></div>
     <h4>Cantidad total de cartones</h4>
 <input type="number" id="inputTotalCartones" placeholder="Ej: 300" min="1">
 <button onclick="actualizarCantidadCartones()">Actualizar cantidad</button>
@@ -119,19 +129,6 @@
   Borrar todas las imágenes de cartones
 </button>
 <div id="deleteStatus"></div>
-
-    <p>Total cartones vendidos: <span id="contador-cartones"></span></p>
-    <p>Total clientes inscritos: <span id="contador-clientes"></span></p>
-<button id="verListaBtn">Ver lista</button>
-    <h3>lista de aprobados</h3>
-<div id="listaAprobados"></div>
-
-    <button id="cerrarVentasBtn" class="btn-admin">Cerrar Ventas</button>
-    <button id="abrirVentasBtn">Abrir Ventas</button>
-    <button onclick="reiniciarTodo()">Reiniciar Todo</button>
-  </div>
-
-  <button onclick="mostrarVentana('bienvenida')">Inicio</button>
 </section>
 
 <!-- Modal de vista previa del cartón -->
