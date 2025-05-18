@@ -11,7 +11,7 @@ let usuario = {
   cartones: [],
 
 };
-let totalCartones = 50;
+let totalCartones = 100;
 // Navegación entre secciones
 async function mostrarVentana(id) {
   // Si es la sección de cartones, primero verificamos si las ventas están abiertas
@@ -147,7 +147,7 @@ async function consultarCartones() {
   data.forEach(item => {
     item.cartones.forEach(num => {
       const img = document.createElement('img');
-      img.src = `${supabaseUrl}/storage/v1/object/public/cartones/SERIAL_CARTONES_CARTON_${String(num).padStart(5, '0')}.jpg`;
+      img.src = `${supabaseUrl}/storage/v1/object/public/cartones/SERIAL_PRUEBA_CARTON_${String(num).padStart(5, '0')}.jpg`;
       img.style.width = '100px';
       img.style.margin = '5px';
       cont.appendChild(img);
@@ -295,28 +295,15 @@ document.getElementById('cerrarVentasBtn').addEventListener('click', async () =>
 
 // Reiniciar base de datos
 async function reiniciarTodo() {
-  const { data: { user } } = await supabase.auth.getUser();
-console.log('Usuario actual:', user);
-
   if (!confirm('¿Estás seguro de reiniciar todo?')) return;
   await supabase.from('inscripciones').delete().neq('cedula', '');
   await supabase.from('cartones').delete().neq('numero', 0);
-  const { data: archivos, error: listError } = await supabase.storage.from('comprobantes').list('uploads', { limit: 1000 });
-
-  if (listError) {
-    console.error('Error listando comprobantes:', listError.message);
-  } else if (archivos.length > 0) {
-    const nombresArchivos = archivos.map(file => file.name);
-    const { error: removeError } = await supabase.storage.from('comprobantes').remove(nombresArchivos);
-    if (removeError) {
-      console.error('Error borrando comprobantes:', removeError.message);
-    } else {
-      console.log(`Se borraron ${nombresArchivos.length} comprobantes`);
-    }
-  }
+  const { data: archivos } = await supabase.storage.from('comprobantes').list();
   const listaDiv = document.getElementById('listaAprobados');
   if (listaDiv) listaDiv.innerHTML = '';
-  
+  for (const file of archivos) {
+    await supabase.storage.from('comprobantes').remove([file.name]);
+  }
   alert('Datos reiniciados');
   location.reload();
 }
@@ -495,19 +482,6 @@ async function rechazarInscripcion(item, tr) {
   // Eliminar fila de la tabla visual
   tr.remove();
   alert('Inscripción rechazada y eliminada correctamente');
-}
-function actualizarCantidadCartones() {
-  const nuevaCantidad = parseInt(document.getElementById('inputTotalCartones').value);
-  if (!isNaN(nuevaCantidad) && nuevaCantidad > 0) {
-    totalCartones = nuevaCantidad;
-    alert(`Cantidad de cartones actualizada a ${totalCartones}`);
-    // Opcional: regenerar cartones si estás en esa vista
-    if (document.getElementById('cartones').classList.contains('oculto') === false) {
-      generarCartones();
-    }
-  } else {
-    alert('Ingresa una cantidad válida');
-  }
 }
 async function subirCartones() {
   const input = document.getElementById('cartonImageInput');
