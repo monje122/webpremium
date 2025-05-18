@@ -11,7 +11,25 @@ let usuario = {
   cartones: [],
 
 };
-let totalCartones = 100;
+window.addEventListener('DOMContentLoaded', async () => {
+  await obtenerTotalCartones(); // lee desde Supabase
+  generarCartones();            // genera del 1 al totalCartones
+});
+
+let totalCartones = 0;
+
+async function obtenerTotalCartones() {
+  const { data, error } = await supabase
+    .from('configuracion')
+    .select('total_cartones')
+    .eq('clave', 1)
+    .single();
+
+  if (!error && data) {
+    totalCartones = data.total_cartones;
+  }
+}
+
 // Navegación entre secciones
 async function mostrarVentana(id) {
   // Si es la sección de cartones, primero verificamos si las ventas están abiertas
@@ -162,6 +180,9 @@ async function entrarAdmin() {
   if (clave !== 'admin123') return alert('Clave incorrecta');
 
   document.getElementById('panel-admin').classList.remove('oculto');
+  document.getElementById('panel-admin').classList.remove('oculto');
+contarCartonesVendidos(); // 🔁 Llama aquí para que se actualice al entrar
+
 document.getElementById('verListaBtn').addEventListener('click', async () => {
   const { data, error } = await supabase
     .from('inscripciones')
@@ -571,4 +592,51 @@ async function borrarCartones() {
   setTimeout(() => {
     status.innerHTML = '';
   }, 5000);
+}
+function mostrarSeccion(id) {
+  const secciones = document.querySelectorAll('section');
+  secciones.forEach(sec => sec.classList.add('oculto'));
+
+  const target = document.getElementById(id);
+  if (target) target.classList.remove('oculto');
+
+  // Mostrar redes solo en la sección de inicio
+  const redes = document.getElementById('redes-sociales');
+  if (redes) {
+    redes.style.display = id === 'inicio' ? 'flex' : 'none';
+  }
+}
+async function guardarNuevoTotal() {
+  const nuevoTotal = parseInt(document.getElementById("nuevoTotalCartones").value);
+
+  if (isNaN(nuevoTotal) || nuevoTotal < 1) {
+    document.getElementById("estadoTotalCartones").textContent = "Número inválido.";
+    return;
+  }
+
+  const { error } = await supabase
+    .from('configuracion')
+    .update({ total_cartones: nuevoTotal })
+    .eq('clave', 1);
+
+  if (!error) {
+    document.getElementById("estadoTotalCartones").textContent = "¡Total actualizado!";
+    totalCartones = nuevoTotal;
+    generarCartones(); // Regenera los cartones
+  } else {
+    document.getElementById("estadoTotalCartones").textContent = "Error al actualizar.";
+  }
+}
+async function contarCartonesVendidos() {
+  const { data, error } = await supabase
+    .from('cartones')
+    .select('numero');
+
+  if (error) {
+    console.error('Error al contar cartones:', error);
+    return;
+  }
+
+  const total = data.length;
+  document.getElementById('total-vendidos').textContent = total;
 }
