@@ -35,7 +35,7 @@ input, button {
 }
 
 button {
-  background-color: #28a745;
+  background-color: #16bedb;
   color: white;
   border: none;
   cursor: pointer;
@@ -174,47 +174,15 @@ button:hover {
 #btnContinuarCartones:hover {
   background-color: #0056b3;
 }
-.admin-buttons {
+#redes-sociales {
+  display: none; /* oculto por defecto */
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 15px;
-}
-#btnContinuarCartones {
-  padding: 10px 20px;
-  font-size: 14px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-top: 20px; /* espacio con respecto a otros elementos */
-}
-
-#btnContinuarCartones:hover {
-  background-color: #0056b3;
-}
-.btn-admin {
-  flex: 1;
-  padding: 6px 10px;
-  font-size: 13px;
-  border: none;
-  border-radius: 4px;
-  background-color: #1976d2;
-  color: white;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  white-space: nowrap;
-}
-
-.btn-admin:hover {
-  background-color: #125a9c;
-}
-
-.btn-admin.danger {
-  background-color: #d32f2f;
-}
-
-.btn-admin.danger:hover {
-  background-color: #a71c1c;
+  flex-direction: row;
+  gap: 20px;
+  align-items: center;
+  z-index: 999;
 }
