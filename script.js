@@ -34,12 +34,12 @@ async function obtenerTotalCartones() {
 async function cargarPrecioPorCarton() {
   const { data, error } = await supabase
     .from('configuracion')
-    .select('valor')
+    .select('valore')
     .eq('clave', 'precio_carton')
     .single();
 
   if (!error && data) {
-    precioPorCarton = parseFloat(data.valor);
+    precioPorCarton = parseFloat(data.valore);
   } else {
     console.error('Error cargando el precio del cartón', error);
     precioPorCarton = 0;
@@ -687,14 +687,14 @@ obtenerMontoTotalRecaudado();
 async function cargarPrecioPorCarton() {
   const { data, error } = await supabase
     .from('configuracion')
-    .select('valor')
+    .select('valore')
     .eq('clave', 'precio_por_carton')
     .single();
 
   if (error) {
     console.error('Error cargando precio por cartón:', error);
   } else if (data) {
-    precioPorCarton = parseFloat(data.valor);
+    precioPorCarton = parseFloat(data.valore);
     document.getElementById('precioCarton').value = precioPorCarton;
   }
 }
@@ -709,7 +709,7 @@ document.getElementById('guardarPrecioBtn').addEventListener('click', async () =
 
   const { error } = await supabase
     .from('configuracion')
-    .update({ valor: nuevoPrecio })
+    .update({ valore: nuevoPrecio })
     .eq('clave', 'precio_por_carton');
 
   if (error) {
