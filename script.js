@@ -3,6 +3,7 @@ const supabase = window.supabase.createClient(supabaseUrl, 'eyJhbGciOiJIUzI1NiIs
 
 // Variables globales
 let cartonesOcupados = [];
+let precioPorCarton = 0;
 let usuario = {
   nombre: '',
   telefono: '',
@@ -13,11 +14,12 @@ let usuario = {
 };
 window.addEventListener('DOMContentLoaded', async () => {
   await obtenerTotalCartones(); // lee desde Supabase
+   await cargarPrecioPorCarton();
   generarCartones();            // genera del 1 al totalCartones
 });
 
 let totalCartones = 0;
-
+ 
 async function obtenerTotalCartones() {
   const { data, error } = await supabase
     .from('configuracion')
@@ -27,6 +29,20 @@ async function obtenerTotalCartones() {
 
   if (!error && data) {
     totalCartones = data.total_cartones;
+  }
+}
+async function cargarPrecioPorCarton() {
+  const { data, error } = await supabase
+    .from('configuracion')
+    .select('valor')
+    .eq('clave', 'precio_carton')
+    .single();
+
+  if (!error && data) {
+    precioPorCarton = parseFloat(data.valor);
+  } else {
+    console.error('Error cargando el precio del cartón', error);
+    precioPorCarton = 0;
   }
 }
 
@@ -48,6 +64,7 @@ async function mostrarVentana(id) {
 }
   }
 
+
   // Ahora mostramos la ventana deseada
   document.querySelectorAll('section').forEach(s => s.classList.add('oculto'));
   document.getElementById(id).classList.remove('oculto');
@@ -57,7 +74,7 @@ async function mostrarVentana(id) {
   }
 
   if (id === 'pago') {
-    document.getElementById('monto-pago').textContent = usuario.cartones.length * 1;
+    document.getElementById('monto-pago').textContent = usuario.cartones.length * precioPorCarton;
   }
 }
 // Guardar datos del formulario
@@ -108,9 +125,9 @@ function toggleCarton(num, elem) {
   actualizarContadorCartones(totalCartones, cartonesOcupados.length, usuario.cartones.length);
   actualizarMonto();
 }
-
+ 
 function actualizarMonto() {
-  document.getElementById('monto-total').textContent = usuario.cartones.length * 1;
+  document.getElementById('monto-total').textContent = usuario.cartones.length * precioPorCarton;
 }
 
 // Subir comprobante y guardar en Supabase
@@ -178,11 +195,9 @@ usuario.cartones = [];
 async function entrarAdmin() {
   const clave = document.getElementById('clave-admin').value;
   if (clave !== 'admin123') return alert('Clave incorrecta');
-
+obtenerMontoTotalRecaudado();
   document.getElementById('panel-admin').classList.remove('oculto');
-  document.getElementById('panel-admin').classList.remove('oculto');
-contarCartonesVendidos(); // 🔁 Llama aquí para que se actualice al entrar
-
+  contarCartonesVendidos();
 document.getElementById('verListaBtn').addEventListener('click', async () => {
   const { data, error } = await supabase
     .from('inscripciones')
@@ -640,3 +655,90 @@ async function contarCartonesVendidos() {
   const total = data.length;
   document.getElementById('total-vendidos').textContent = total;
 }
+const obtenerMontoTotalRecaudado = async () => {
+  const { data, error } = await supabase
+    .from('inscripciones')
+    .select('cartones');
+
+  if (error) {
+    console.error('Error al obtener inscripciones:', error.message);
+    return;
+  }
+
+  let totalCartones = 0;
+
+  data.forEach(inscripcion => {
+    if (Array.isArray(inscripcion.cartones)) {
+      totalCartones += inscripcion.cartones.length;
+    }
+  });
+
+  // Cambia esto si tu precio es diferente
+  const montoTotal = totalCartones * precioPorCarton;
+
+  document.getElementById('totalMonto').textContent = `$${montoTotal.toFixed(2)}`;
+};
+
+// Llama la función cuando cargue el admin
+obtenerMontoTotalRecaudado();
+// Variable global para el precio
+
+// Función para cargar el precio desde Supabase al iniciar el admin
+async function cargarPrecioPorCarton() {
+  const { data, error } = await supabase
+    .from('configuracion')
+    .select('valor')
+    .eq('clave', 'precio_por_carton')
+    .single();
+
+  if (error) {
+    console.error('Error cargando precio por cartón:', error);
+  } else if (data) {
+    precioPorCarton = parseFloat(data.valor);
+    document.getElementById('precioCarton').value = precioPorCarton;
+  }
+}
+
+// Función para guardar el precio nuevo al hacer clic en el botón
+document.getElementById('guardarPrecioBtn').addEventListener('click', async () => {
+  const nuevoPrecio = parseFloat(document.getElementById('precioCarton').value);
+  if (isNaN(nuevoPrecio) || nuevoPrecio < 0) {
+    alert('Ingrese un precio válido');
+    return;
+  }
+
+  const { error } = await supabase
+    .from('configuracion')
+    .update({ valor: nuevoPrecio })
+    .eq('clave', 'precio_por_carton');
+
+  if (error) {
+    alert('Error guardando el precio');
+    console.error(error);
+  } else {
+    alert('Precio actualizado correctamente');
+    precioPorCarton = nuevoPrecio;
+    // Aquí puedes llamar a la función que actualiza el monto en pantalla
+    actualizarMonto();
+  }
+});
+
+// Llama esta función cuando entres al panel admin para cargar el precio
+async function iniciarAdmin() {
+  await cargarPrecioPorCarton();
+  // Resto de código para iniciar panel admin...
+}
+
+function actualizarMonto() {
+  const cantidadCartones = usuario.cartones.length || 0;
+  const total = cantidadCartones * precioPorCarton;
+  document.getElementById('monto-total').textContent = total.toFixed(2);
+}
+document.getElementById('imprimirListaBtn').addEventListener('click', () => {
+  const lista = document.getElementById('listaAprobados');
+  if (!lista.innerHTML.trim()) {
+    alert('Primero debes generar la lista de aprobados.');
+    return;
+  }
+  window.print();
+});
