@@ -88,8 +88,16 @@
   <button id="abrirVentasBtn">Abrir Ventas</button>
   <button onclick="reiniciarTodo()">Reiniciar Todo</button>
 </div>
+    <div>
+  <label for="precioCarton">Precio por cartón:</label>
+  <input type="number" id="precioCarton" min="0" step="0.01" />
+  <button id="guardarPrecioBtn">Guardar precio</button>
+</div>
     <p>Total de cartones vendidos: <span id="total-vendidos">0</span></p>
     <p>Total clientes inscritos: <span id="contador-clientes"></span></p>
+<p>Total recaudado: <strong id="totalMonto">$0.00</strong></p>
+
+
     <h3>Inscripciones pendientes</h3>
 
     <table id="tabla-comprobantes">
@@ -107,6 +115,7 @@
       <tbody></tbody>
     </table>
 <button id="verListaBtn">Ver lista</button>
+    <button id="imprimirListaBtn">Imprimir Lista</button>
     <h3>lista de aprobados</h3>
 <div id="listaAprobados"></div>
     
