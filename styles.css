@@ -186,3 +186,17 @@ button:hover {
   align-items: center;
   z-index: 999;
 }
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #listaAprobados, #listaAprobados * {
+    visibility: visible;
+  }
+  #listaAprobados {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}
