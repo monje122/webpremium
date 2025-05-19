@@ -163,11 +163,6 @@ async function enviarComprobante() {
 
   alert('Inscripción y comprobante enviados con éxito');
   location.reload();
-
- 
-
-  alert('Comprobante enviado');
-  location.reload();
 }
 
 // Consultar cartones por cédula
