@@ -164,10 +164,7 @@ async function enviarComprobante() {
   alert('Inscripción y comprobante enviados con éxito');
   location.reload();
 
-  // Marcar cartones como ocupados
-  for (const num of usuario.cartones) {
-    await supabase.from('cartones').insert([{ numero: num }]);
-  }
+ 
 
   alert('Comprobante enviado');
   location.reload();
