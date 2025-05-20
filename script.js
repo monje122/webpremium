@@ -831,3 +831,18 @@ async function seleccionarCartonActual() {
   cerrarModalCarton();
   cargarCartones(); // recarga el estado
 }
+async function verificarCartonesDisponibles(cartonesSeleccionados) {
+  const { data, error } = await supabase
+    .from('cartones')
+    .select('numero')
+    .in('numero', cartonesSeleccionados);
+
+  if (error) {
+    console.error('Error al verificar cartones:', error);
+    return false;
+  }
+
+  // Si hay resultados, significa que uno o más cartones ya están ocupados
+  return data.length === 0;
+}
+
