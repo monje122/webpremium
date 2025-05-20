@@ -734,3 +734,41 @@ document.getElementById('imprimirListaBtn').addEventListener('click', () => {
   }
   window.print();
 });
+async function seleccionarCartonActual() {
+  const numeroCarton = parseInt(document.getElementById('numeroCartonModal').innerText);
+  const cedula = localStorage.getItem('cedula');
+
+  // 🔍 Verifica en Supabase si el cartón ya está ocupado
+  const { data: existente, error } = await supabase
+    .from('inscripciones')
+    .select('cartones')
+    .contains('cartones', [numeroCarton]);
+
+  if (error) {
+    alert('Error al verificar el cartón');
+    console.error(error);
+    return;
+  }
+
+  if (existente.length > 0) {
+    alert(`El cartón ${numeroCarton} ya fue seleccionado por otro jugador. Por favor, elige otro.`);
+    return;
+  }
+
+  // ✅ Si no está ocupado, lo puedes guardar
+  const { data, error: insertError } = await supabase
+    .from('inscripciones')
+    .update({ cartones: supabase.literal(`array_append(cartones, ${numeroCarton})`) })
+    .eq('cedula', cedula);
+
+  if (insertError) {
+    alert('Error al guardar el cartón.');
+    console.error(insertError);
+    return;
+  }
+
+  alert(`Cartón ${numeroCarton} seleccionado exitosamente.`);
+  cerrarModalCarton();
+  cargarCartones(); // recarga el estado
+}
+
