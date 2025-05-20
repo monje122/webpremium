@@ -132,16 +132,26 @@ function actualizarMonto() {
 
 // Subir comprobante y guardar en Supabase
 async function enviarComprobante() {
-   if (!usuario.nombre || !usuario.telefono || !usuario.cedula ) {
+  if (!usuario.nombre || !usuario.telefono || !usuario.cedula) {
     return alert('Debes completar primero los datos de inscripción');
   }
+
   const archivo = document.getElementById('comprobante').files[0];
   if (!archivo) return alert('Debes subir un comprobante');
+
+  // Verificar disponibilidad
+  const disponibles = await verificarCartonesDisponibles(usuario.cartones);
+  if (!disponibles) {
+    return alert('Uno o más cartones que seleccionaste ya fueron ocupados. Por favor vuelve a seleccionar.');
+  }
+
   const nombreArchivo = `${usuario.cedula}-${Date.now()}.jpg`;
-  const { data, error } = await supabase.storage.from('comprobantes').upload(nombreArchivo, archivo);
-  if (error) return alert('Error subiendo imagen');
+
+  const { data: dataUpload, error: errorUpload } = await supabase.storage.from('comprobantes').upload(nombreArchivo, archivo);
+  if (errorUpload) return alert('Error subiendo imagen');
+
   const urlPublica = `${supabaseUrl}/storage/v1/object/public/comprobantes/${nombreArchivo}`;
-// Guardar inscripción en Supabase
+
   const { error: errorInsert } = await supabase.from('inscripciones').insert([{
     nombre: usuario.nombre,
     telefono: usuario.telefono,
@@ -156,7 +166,6 @@ async function enviarComprobante() {
     return alert('Error guardando inscripción');
   }
 
-  // Marcar cartones como ocupados
   for (const num of usuario.cartones) {
     await supabase.from('cartones').insert([{ numero: num }]);
   }
@@ -734,6 +743,7 @@ document.getElementById('imprimirListaBtn').addEventListener('click', () => {
   }
   window.print();
 });
+
 async function seleccionarCartonActual() {
   const numeroCarton = parseInt(document.getElementById('numeroCartonModal').innerText);
   const cedula = localStorage.getItem('cedula');
@@ -771,4 +781,53 @@ async function seleccionarCartonActual() {
   cerrarModalCarton();
   cargarCartones(); // recarga el estado
 }
+async function verificarCartonesDisponibles(cartonesSeleccionados) {
+  const { data, error } = await supabase
+    .from('cartones')
+    .select('numero')
+    .in('numero', cartonesSeleccionados);
 
+  if (error) {
+    console.error('Error al verificar cartones ocupados:', error);
+    return false; // Error = evitar guardar
+  }
+
+  return data.length === 0; // Si no hay coincidencias, están disponibles
+}
+async function seleccionarCartonActual() {
+  const numeroCarton = parseInt(document.getElementById('numeroCartonModal').innerText);
+  const cedula = localStorage.getItem('cedula');
+
+  // 🔍 Verifica en Supabase si el cartón ya está ocupado
+  const { data: existente, error } = await supabase
+    .from('inscripciones')
+    .select('cartones')
+    .contains('cartones', [numeroCarton]);
+
+  if (error) {
+    alert('Error al verificar el cartón');
+    console.error(error);
+    return;
+  }
+
+  if (existente.length > 0) {
+    alert(`El cartón ${numeroCarton} ya fue seleccionado por otro jugador. Por favor, elige otro.`);
+    return;
+  }
+
+  // ✅ Si no está ocupado, lo puedes guardar
+  const { data, error: insertError } = await supabase
+    .from('inscripciones')
+    .update({ cartones: supabase.literal(`array_append(cartones, ${numeroCarton})`) })
+    .eq('cedula', cedula);
+
+  if (insertError) {
+    alert('Error al guardar el cartón.');
+    console.error(insertError);
+    return;
+  }
+
+  alert(`Cartón ${numeroCarton} seleccionado exitosamente.`);
+  cerrarModalCarton();
+  cargarCartones(); // recarga el estado
+}
