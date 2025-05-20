@@ -132,6 +132,7 @@ function actualizarMonto() {
 
 // Subir comprobante y guardar en Supabase
 async function enviarComprobante() {
+  // Verifica datos
   if (!usuario.nombre || !usuario.telefono || !usuario.cedula) {
     return alert('Debes completar primero los datos de inscripción');
   }
@@ -139,19 +140,23 @@ async function enviarComprobante() {
   const archivo = document.getElementById('comprobante').files[0];
   if (!archivo) return alert('Debes subir un comprobante');
 
-  // Verificar disponibilidad
+  // ⚠️ Verifica disponibilidad justo antes de guardar
   const disponibles = await verificarCartonesDisponibles(usuario.cartones);
   if (!disponibles) {
     return alert('Uno o más cartones que seleccionaste ya fueron ocupados. Por favor vuelve a seleccionar.');
   }
 
+  // Subir comprobante
   const nombreArchivo = `${usuario.cedula}-${Date.now()}.jpg`;
+  const { data: dataUpload, error: errorUpload } = await supabase.storage
+    .from('comprobantes')
+    .upload(nombreArchivo, archivo);
 
-  const { data: dataUpload, error: errorUpload } = await supabase.storage.from('comprobantes').upload(nombreArchivo, archivo);
   if (errorUpload) return alert('Error subiendo imagen');
 
   const urlPublica = `${supabaseUrl}/storage/v1/object/public/comprobantes/${nombreArchivo}`;
 
+  // Inserta inscripción
   const { error: errorInsert } = await supabase.from('inscripciones').insert([{
     nombre: usuario.nombre,
     telefono: usuario.telefono,
@@ -166,6 +171,7 @@ async function enviarComprobante() {
     return alert('Error guardando inscripción');
   }
 
+  // Marca los cartones como ocupados
   for (const num of usuario.cartones) {
     await supabase.from('cartones').insert([{ numero: num }]);
   }
