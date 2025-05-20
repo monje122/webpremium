@@ -683,7 +683,7 @@ const obtenerMontoTotalRecaudado = async () => {
   // Cambia esto si tu precio es diferente
   const montoTotal = totalCartones * precioPorCarton;
 
-  document.getElementById('totalMonto').textContent = `$${montoTotal.toFixed(2)}`;
+  document.getElementById('totalMonto').textContent = `$BS{montoTotal.toFixed(2)}`;
 };
 
 // Llama la función cuando cargue el admin
