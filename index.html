@@ -10,7 +10,9 @@
   <!-- Ventana de bienvenida -->
   <section id="bienvenida">
     <img src="https://i.postimg.cc/RVjDRVDV/img4.png" alt="Logo" class="logo">
-     <!-- Redes sociales - visible solo en la pantalla de inicio -->
+    
+    <div id="hora-venezuela" style="margin-top: 15px; font-weight: bold; font-size: 16px;"></div>
+ <!-- Redes sociales - visible solo en la pantalla de inicio -->
 <div id="redes-sociales">
   <a href="https://wa.me/tuNumero" target="_blank" rel="noopener noreferrer" title="WhatsApp">
     <img src="https://cdn-icons-png.flaticon.com/512/733/733585.png" alt="WhatsApp" width="40" />
@@ -18,14 +20,19 @@
   <a href="https://www.youtube.com/c/tuCanal" target="_blank" rel="noopener noreferrer" title="YouTube">
     <img src="https://cdn-icons-png.flaticon.com/512/1384/1384060.png" alt="YouTube" width="40" />
   </a>
+  <a href="https://facebook.com/tuUsuario" target="_blank" rel="noopener noreferrer" title="Facebook">
+  <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" alt="Facebook" width="40" height="40" />
+</a>
   <a href="https://instagram.com/tuUsuario" target="_blank" rel="noopener noreferrer" title="Instagram">
     <img src="https://cdn-icons-png.flaticon.com/512/1384/1384063.png" alt="Instagram" width="40" />
   </a>
 </div>
     <button onclick="mostrarVentana('inscripcion')">Comprar</button>
     <button onclick="mostrarVentana('usuario')">Usuario</button>
+    <button onclick="mostrarVentana('lista-aprobados')">📋 Lista de Aprobados</button>
     <button onclick="mostrarVentana('admin')">Admin</button>
   </section>
+
 
 
   <!-- Ventana de inscripción -->
@@ -39,6 +46,28 @@
 
     <button onclick="mostrarVentana('bienvenida')">Inicio</button>
   </section>
+<!-- Ventana de cantidad de cartones ------------------------------------>
+<section id="cantidad" class="oculto">
+  <h2>¿Cuántos cartones quieres comprar?</h2>
+
+  <div class="selector-cantidad">
+    <button id="btnMenos" type="button">−</button>
+
+    <!-- permite teclear o usar los botones -->
+    <input type="number"
+           id="cantidadCartones"
+           value="1"
+           min="1"
+           step="1" />
+
+    <button id="btnMas" type="button">+</button>
+  </div>
+
+  <p>Total a pagar: <strong><span id="monto-preseleccion">0</span> Bs</strong></p>
+
+  <button type="button" onclick="confirmarCantidad()">Continuar</button>
+  <button type="button" onclick="mostrarVentana('bienvenida')">Inicio</button>
+</section>
 
   <!-- Selección de cartones -->
   <section id="cartones" class="oculto">
@@ -75,8 +104,7 @@
     <button id="btnElegirMas" onclick="elegirMasCartones()">Elegir más cartones</button>
 <button onclick="mostrarVentana('bienvenida')">Inicio</button>
   </section>
-
-  
+ 
 <!-- Panel admin -->
 <section id="admin" class="oculto">
   <h2>Panel de Administración</h2>
@@ -96,7 +124,7 @@
 </div>
     <p>Total de cartones vendidos: <span id="total-vendidos">0</span></p>
     <p>Total clientes inscritos: <span id="contador-clientes"></span></p>
-<p>Total recaudado: <strong id="totalMonto">0.00bs</strong></p>
+<p>Total recaudado: <strong id="totalMonto">$0.00</strong></p>
 
 
     <h3>Inscripciones pendientes</h3>
@@ -136,6 +164,14 @@
 
   <button onclick="mostrarVentana('bienvenida')">Inicio</button>
 </section>
+ <!-- Ventana aprobados -->
+
+
+<section id="lista-aprobados" class="oculto">
+  <h2>Lista de Aprobados</h2>
+  <div id="contenedor-aprobados"></div>
+  <button onclick="mostrarVentana('bienvenida')">Inicio</button>
+</section>
 
 <!-- Modal de vista previa del cartón -->
 <div id="modal-carton" class="modal oculto">
@@ -147,7 +183,23 @@
     </div>
   </div>
 </div>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+ 
+  
+  <div id="modal-terminos" class="modal oculto">
+  <div class="modal-contenido">
+    <h2>Importante antes de jugar</h2>
+    <p style="max-height: 300px; overflow-y: auto; text-align: left; font-size: 14px; line-height: 1.5;">
+      Al momento de seleccionar sus números el jugador debe verificar Fechas, Premios y Hora de juego para estar al tanto de toda la información.<br><br>
+      Una vez el sistema registre la compra, no se realizan devoluciones.<br><br>
+      Luego de realizar su compra debe esperar unos minutos a que sea verificada.<br><br>
+      Puede verificar su jugada haciendo click en "Usuario" (si no aparecen los números, la jugada aún no ha sido verificada).<br><br>
+      <strong>Al finalizar la compra, únase al grupo de juego DE INMEDIATO.</strong>
+    </p>
+    <button onclick="cerrarTerminos()">Aceptar</button>
+  </div>
+</div>
+
+ <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="script.js"></script>
 </body>
 </html>
