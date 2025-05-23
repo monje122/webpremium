@@ -175,16 +175,16 @@ button:hover {
   background-color: #0056b3;
 }
 #redes-sociales {
-  display: none; /* oculto por defecto */
   position: fixed;
-  top: 20px;
+  bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  flex-direction: row;
   gap: 20px;
-  align-items: center;
   z-index: 999;
+  padding: 10px 20px;
+  border-radius: 30px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 @media print {
   body * {
@@ -200,3 +200,41 @@ button:hover {
     width: 100%;
   }
 }
+.selector-cantidad {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.selector-cantidad button {
+  width: 40px;
+  height: 40px;
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 0;
+}
+.selector-cantidad input {
+  max-width: 80px;
+  text-align: center;
+}
+button {
+  background-color: #16bedb;
+  color: white;
+  border: none;
+  cursor: pointer;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 400px;
+  margin: 10px auto;
+  display: block;
+}
+
+button:hover {
+  background-color: #218838;
+}
+
+
