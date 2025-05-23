@@ -4,6 +4,8 @@ const supabase = window.supabase.createClient(supabaseUrl, 'eyJhbGciOiJIUzI1NiIs
 // Variables globales
 let cartonesOcupados = [];
 let precioPorCarton = 0;
+let cantidadPermitida = 0;
+
 let usuario = {
   nombre: '',
   telefono: '',
@@ -15,8 +17,10 @@ let usuario = {
 window.addEventListener('DOMContentLoaded', async () => {
   await obtenerTotalCartones(); // lee desde Supabase
    await cargarPrecioPorCarton();
-  generarCartones();            // genera del 1 al totalCartones
+  generarCartones();// genera del 1 al totalCartones
+
 });
+
 
 let totalCartones = 0;
  
@@ -44,6 +48,44 @@ async function cargarPrecioPorCarton() {
     console.error('Error cargando el precio del cartón', error);
     precioPorCarton = 0;
   }
+}
+function actualizarPreseleccion() {
+  const cant = parseInt(document.getElementById('cantidadCartones').value) || 1;
+  const maxDisponibles = totalCartones - cartonesOcupados.length;
+  const cantidadValida = Math.min(cant, maxDisponibles);
+
+  document.getElementById('cantidadCartones').value = cantidadValida;
+  document.getElementById('monto-preseleccion').textContent =
+    (cantidadValida * precioPorCarton).toFixed(2);
+}
+
+// botones + y −
+document.getElementById('btnMas').onclick   = () => {
+  document.getElementById('cantidadCartones').stepUp();
+  actualizarPreseleccion();
+};
+document.getElementById('btnMenos').onclick = () => {
+  document.getElementById('cantidadCartones').stepDown();
+  actualizarPreseleccion();
+};
+
+// detectar tecleo manual
+document.getElementById('cantidadCartones').addEventListener('input', actualizarPreseleccion);
+
+function confirmarCantidad() {
+  const cant = parseInt(document.getElementById('cantidadCartones').value);
+  const maxDisponibles = totalCartones - cartonesOcupados.length;
+
+  if (isNaN(cant) || cant < 1) {
+    return alert('Ingresa un número válido');
+  }
+  if (cant > maxDisponibles) {
+    return alert(`Solo quedan ${maxDisponibles} cartones disponibles`);
+  }
+
+  cantidadPermitida   = cant;   // guardamos el tope
+  usuario.cartones    = [];     // limpiamos selección anterior, si hubiera
+  mostrarVentana('cartones');
 }
 
 // Navegación entre secciones
@@ -76,6 +118,11 @@ async function mostrarVentana(id) {
   if (id === 'pago') {
     document.getElementById('monto-pago').textContent = usuario.cartones.length * precioPorCarton;
   }
+  
+  if (id === 'lista-aprobados') {
+    await cargarListaAprobadosSeccion();
+  }
+  
 }
 // Guardar datos del formulario
 function guardarDatosInscripcion() {
@@ -84,7 +131,8 @@ function guardarDatosInscripcion() {
   usuario.cedula = document.getElementById('cedula').value;
   usuario.referido = document.getElementById('referido').value;
   usuario.cartones = [];
-  mostrarVentana('cartones');
+  mostrarVentana('cantidad')
+  actualizarPreseleccion(); 
 }
 
 // Cargar y mostrar cartones con imagen y modal
@@ -115,12 +163,41 @@ async function cargarCartones() {
 // Marcar/desmarcar cartones
 function toggleCarton(num, elem) {
   const index = usuario.cartones.indexOf(num);
+
+  // Deseleccionar
   if (index >= 0) {
     usuario.cartones.splice(index, 1);
     elem.classList.remove('seleccionado');
+
+    // 🔓 Desbloquear solo los cartones bloqueados temporalmente (no los ocupados reales)
+    document.querySelectorAll('.carton.bloqueado').forEach(c => {
+      const n = parseInt(c.textContent);
+      if (!cartonesOcupados.includes(n) && !usuario.cartones.includes(n)) {
+        c.classList.remove('bloqueado');
+        c.onclick = () => abrirModalCarton(n, c);
+      }
+    });
+
   } else {
+    // Evita seleccionar más de los permitidos
+    if (usuario.cartones.length >= cantidadPermitida) return;
+
     usuario.cartones.push(num);
     elem.classList.add('seleccionado');
+
+    // 🔒 Si alcanzó el límite, bloquear el resto
+    if (usuario.cartones.length === cantidadPermitida) {
+      document.querySelectorAll('.carton').forEach(c => {
+        const n = parseInt(c.textContent);
+        const yaSeleccionado = usuario.cartones.includes(n);
+        const yaOcupado = cartonesOcupados.includes(n);
+
+        if (!yaSeleccionado && !yaOcupado) {
+          c.classList.add('bloqueado');
+          c.onclick = null;
+        }
+      });
+    }
   }
   actualizarContadorCartones(totalCartones, cartonesOcupados.length, usuario.cartones.length);
   actualizarMonto();
@@ -132,31 +209,33 @@ function actualizarMonto() {
 
 // Subir comprobante y guardar en Supabase
 async function enviarComprobante() {
-  // Verifica datos
-  if (!usuario.nombre || !usuario.telefono || !usuario.cedula) {
+   if (!usuario.nombre || !usuario.telefono || !usuario.cedula ) {
     return alert('Debes completar primero los datos de inscripción');
   }
-
   const archivo = document.getElementById('comprobante').files[0];
   if (!archivo) return alert('Debes subir un comprobante');
-
-  // ⚠️ Verifica disponibilidad justo antes de guardar
-  const disponibles = await verificarCartonesDisponibles(usuario.cartones);
-  if (!disponibles) {
-    return alert('Uno o más cartones que seleccionaste ya fueron ocupados. Por favor vuelve a seleccionar.');
-  }
-
-  // Subir comprobante
   const nombreArchivo = `${usuario.cedula}-${Date.now()}.jpg`;
-  const { data: dataUpload, error: errorUpload } = await supabase.storage
-    .from('comprobantes')
-    .upload(nombreArchivo, archivo);
-
-  if (errorUpload) return alert('Error subiendo imagen');
-
+  const { data, error } = await supabase.storage.from('comprobantes').upload(nombreArchivo, archivo);
+  if (error) return alert('Error subiendo imagen');
   const urlPublica = `${supabaseUrl}/storage/v1/object/public/comprobantes/${nombreArchivo}`;
+  
+  // Verificar si alguno de los cartones ya está ocupado
+const { data: cartonesExistentes, error: errorVerificacion } = await supabase
+  .from('cartones')
+  .select('numero')
+  .in('numero', usuario.cartones);
 
-  // Inserta inscripción
+if (errorVerificacion) {
+  console.error('Error al verificar cartones:', errorVerificacion);
+  return alert('Error al verificar disponibilidad. Intenta de nuevo.');
+}
+
+if (cartonesExistentes.length > 0) {
+  const ocupados = cartonesExistentes.map(c => c.numero).join(', ');
+  return alert(`Los cartones ${ocupados} ya fueron tomados. Por favor selecciona otros.`);
+}
+
+// Guardar inscripción en Supabase
   const { error: errorInsert } = await supabase.from('inscripciones').insert([{
     nombre: usuario.nombre,
     telefono: usuario.telefono,
@@ -171,14 +250,21 @@ async function enviarComprobante() {
     return alert('Error guardando inscripción');
   }
 
-  // Marca los cartones como ocupados
-  for (const num of usuario.cartones) {
-    await supabase.from('cartones').insert([{ numero: num }]);
-  }
+  // Marcar cartones como ocupados
+for (const num of usuario.cartones) {
+  const { error: errInsertCarton } = await supabase
+    .from('cartones')
+    .insert([{ numero: num }]);
 
+  if (errInsertCarton) {
+    console.error(errInsertCarton);
+    return alert(`Error: El cartón ${num} ya fue ocupado por otra persona.`);
+  }
+}
   alert('Inscripción y comprobante enviados con éxito');
   location.reload();
-}
+
+   }
 
 // Consultar cartones por cédula
 async function consultarCartones() {
@@ -189,7 +275,8 @@ async function consultarCartones() {
   data.forEach(item => {
     item.cartones.forEach(num => {
       const img = document.createElement('img');
-      img.src = `${supabaseUrl}/storage/v1/object/public/cartones/SERIAL_PRUEBA_CARTON_${String(num).padStart(5, '0')}.jpg`;
+      img.src = `${supabaseUrl}/storage/v1/object/public/cartones/SERIAL_CARTONES_CARTON_${String(num).padStart(5, '0')}.jpg`;
+
       img.style.width = '100px';
       img.style.margin = '5px';
       cont.appendChild(img);
@@ -402,7 +489,9 @@ async function elegirMasCartones() {
   usuario.cartones = [];
 
   // Ir a pantalla de selección
-  mostrarVentana('cartones');
+
+  mostrarVentana('cantidad');      // 👈 aquí va a la nueva ventana
+  actualizarPreseleccion();    
 }
 document.getElementById('abrirVentasBtn').addEventListener('click', async () => {
   const confirmacion = confirm("¿Estás seguro que quieres abrir las ventas?");
@@ -683,7 +772,7 @@ const obtenerMontoTotalRecaudado = async () => {
   // Cambia esto si tu precio es diferente
   const montoTotal = totalCartones * precioPorCarton;
 
-  document.getElementById('totalMonto').textContent = `$BS{montoTotal.toFixed(2)}`;
+  document.getElementById('totalMonto').textContent = `$${montoTotal.toFixed(2)}`;
 };
 
 // Llama la función cuando cargue el admin
@@ -749,106 +838,72 @@ document.getElementById('imprimirListaBtn').addEventListener('click', () => {
   }
   window.print();
 });
-
-async function seleccionarCartonActual() {
-  const numeroCarton = parseInt(document.getElementById('numeroCartonModal').innerText);
-  const cedula = localStorage.getItem('cedula');
-
-  // 🔍 Verifica en Supabase si el cartón ya está ocupado
-  const { data: existente, error } = await supabase
-    .from('inscripciones')
-    .select('cartones')
-    .contains('cartones', [numeroCarton]);
-
-  if (error) {
-    alert('Error al verificar el cartón');
-    console.error(error);
-    return;
-  }
-
-  if (existente.length > 0) {
-    alert(`El cartón ${numeroCarton} ya fue seleccionado por otro jugador. Por favor, elige otro.`);
-    return;
-  }
-
-  // ✅ Si no está ocupado, lo puedes guardar
-  const { data, error: insertError } = await supabase
-    .from('inscripciones')
-    .update({ cartones: supabase.literal(`array_append(cartones, ${numeroCarton})`) })
-    .eq('cedula', cedula);
-
-  if (insertError) {
-    alert('Error al guardar el cartón.');
-    console.error(insertError);
-    return;
-  }
-
-  alert(`Cartón ${numeroCarton} seleccionado exitosamente.`);
-  cerrarModalCarton();
-  cargarCartones(); // recarga el estado
-}
-async function verificarCartonesDisponibles(cartonesSeleccionados) {
+async function cargarListaAprobadosSeccion() {
   const { data, error } = await supabase
-    .from('cartones')
-    .select('numero')
-    .in('numero', cartonesSeleccionados);
-
-  if (error) {
-    console.error('Error al verificar cartones ocupados:', error);
-    return false; // Error = evitar guardar
-  }
-
-  return data.length === 0; // Si no hay coincidencias, están disponibles
-}
-async function seleccionarCartonActual() {
-  const numeroCarton = parseInt(document.getElementById('numeroCartonModal').innerText);
-  const cedula = localStorage.getItem('cedula');
-
-  // 🔍 Verifica en Supabase si el cartón ya está ocupado
-  const { data: existente, error } = await supabase
     .from('inscripciones')
-    .select('cartones')
-    .contains('cartones', [numeroCarton]);
+    .select('*')
+    .eq('estado', 'aprobado');
 
-  if (error) {
-    alert('Error al verificar el cartón');
-    console.error(error);
+  const contenedor = document.getElementById('contenedor-aprobados');
+  contenedor.innerHTML = '';
+
+  if (error || !data.length) {
+    contenedor.innerHTML = '<p>No hay aprobados aún.</p>';
     return;
   }
 
-  if (existente.length > 0) {
-    alert(`El cartón ${numeroCarton} ya fue seleccionado por otro jugador. Por favor, elige otro.`);
-    return;
-  }
+  const tabla = document.createElement('table');
+  tabla.style.width = '100%';
+  tabla.style.borderCollapse = 'collapse';
+  tabla.innerHTML = `
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Cédula</th>
+        <th>Cartones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  `;
 
-  // ✅ Si no está ocupado, lo puedes guardar
-  const { data, error: insertError } = await supabase
-    .from('inscripciones')
-    .update({ cartones: supabase.literal(`array_append(cartones, ${numeroCarton})`) })
-    .eq('cedula', cedula);
+  const tbody = tabla.querySelector('tbody');
 
-  if (insertError) {
-    alert('Error al guardar el cartón.');
-    console.error(insertError);
-    return;
-  }
+  data.forEach(item => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${item.nombre}</td>
+      <td>${item.cedula}</td>
+      <td>${item.cartones.join(', ')}</td>
+    `;
+    tbody.appendChild(tr);
+  });
 
-  alert(`Cartón ${numeroCarton} seleccionado exitosamente.`);
-  cerrarModalCarton();
-  cargarCartones(); // recarga el estado
+  contenedor.appendChild(tabla);
 }
-async function verificarCartonesDisponibles(cartonesSeleccionados) {
-  const { data, error } = await supabase
-    .from('cartones')
-    .select('numero')
-    .in('numero', cartonesSeleccionados);
+document.getElementById('modal-terminos').classList.remove('oculto');
+function cerrarTerminos() {
+  document.getElementById('modal-terminos').classList.add('oculto');
+}
+function actualizarHoraVenezuela() {
+  const contenedor = document.getElementById('hora-venezuela');
+  if (!contenedor) return;
 
-  if (error) {
-    console.error('Error al verificar cartones:', error);
-    return false;
-  }
+  const opciones = {
+    timeZone: 'America/Caracas',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  };
 
-  // Si hay resultados, significa que uno o más cartones ya están ocupados
-  return data.length === 0;
+  const ahora = new Date();
+  const formato = new Intl.DateTimeFormat('es-VE', opciones).format(ahora);
+  contenedor.textContent = `📅 ${formato}`;
 }
 
+actualizarHoraVenezuela(); // Primera vez
+  
+  setInterval(actualizarHoraVenezuela, 1000); // Luego cada segundo
